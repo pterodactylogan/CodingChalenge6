@@ -13,7 +13,9 @@ public class FraudDetection {
 
 			for(CSVRecord record: parser) {
 				String amount = record.get("Amount");
-				System.out.println(amount);
+				if(Float.parseFloat(amount)>=50000) {
+					System.out.println(record.toString());
+				}
 			}
 			}catch(IOException e) {
 				e.printStackTrace();
