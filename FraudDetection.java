@@ -77,6 +77,18 @@ public class FraudDetection {
 				
 				
 			}
+			
+			//go through airlines and flag all records involving those with fewer than 10 transactions
+			for(Object key : airlines.keySet()) {
+				ArrayList<CSVRecord> records = (ArrayList<CSVRecord>) airlines.get(key);
+				if(records.size()<10) {
+					System.out.println(key);
+					for(CSVRecord record: records) {
+						printer.printRecord(record);
+					}
+				}
+			}
+			
 			printer.close();
 			writer.close();
 			}catch(IOException e) {
