@@ -19,10 +19,10 @@ public class FraudDetection {
 	public static void main(String[] args) {
 		//REPLACE W args[0]
 		//set up input file
-		File in = new File("oklahoma-pcard-FY2014.csv");
 		try{
 			//create parser to read through file
-			CSVParser parser = CSVParser.parse(in, StandardCharsets.ISO_8859_1, CSVFormat.EXCEL.withHeader());
+			Reader in = new FileReader("oklahoma-pcard-FY2014.csv");
+			CSVParser parser = CSVParser.parse(in, CSVFormat.EXCEL.withHeader());
 			//set up output file, and overwrite whatever was already there
 			File file= new File("FlaggedRecords.csv");
 			file.delete();
