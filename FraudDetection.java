@@ -13,21 +13,29 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+//import java.nio.charset.StandardCharsets;
 public class FraudDetection {
+	
+	//if your .csv uses different field names, change them here
+	public static final String OUTPUT_FILE="FlaggedRecords.csv";
+	public static final String FIRST_NAME="Cardholder First Initial";
+	public static final String LAST_NAME="Cardholder Last Name";
+	public static final String DESCRIPTION="Description";
+	public static final String CAT_CODE="Merchant Category Code (MCC)";
+	public static final String AMOUNT="Amount";
+	public static final String VENDOR="Vendor";
+	public static final String DATE="Transaction Date";
 
-	public static void main(String[] args) {
-		//REPLACE W args[0]
-		//set up input file
+	public static void main(String[] args) {]
 		try{
-			//create parser to read through file
+			//create parser to read through file (REPLACE W ARGS[0])
 			Reader in = new FileReader("oklahoma-pcard-FY2014.csv");
 			CSVParser parser = CSVParser.parse(in, CSVFormat.EXCEL.withHeader());
 			//set up output file, and overwrite whatever was already there
-			File file= new File("FlaggedRecords.csv");
+			File file= new File(OUTPUT_FILE);
 			file.delete();
 			//create writer for output file, and feed it to a csvPrinter for formatting purposes
-			BufferedWriter writer = new BufferedWriter(new FileWriter("FlaggedRecords.csv", true));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_FILE, true));
 			CSVPrinter printer = new CSVPrinter(writer,CSVFormat.EXCEL.withHeader());
 			
 			//set up map to store records by person (Initial+Last: List<CSVRecord>)
@@ -38,7 +46,7 @@ public class FraudDetection {
 			//loop through each record
 			for(CSVRecord record: parser) {
 				//put this record in the map 
-				String userID = record.get("Cardholder First Initial")+". "+record.get("Cardholder Last Name");
+				String userID = record.get(FIRST_NAME)+" "+record.get(LAST_NAME);
 				if(users.containsKey(userID)) {
 					ArrayList<CSVRecord> records = (ArrayList<CSVRecord>) users.get(userID);
 					records.add(record);
@@ -50,8 +58,8 @@ public class FraudDetection {
 				}
 				
 				//if this transaction was for air travel, add to airlines map
-				if(record.get("Description").equals("AIR TRAVEL")) {
-					String airline = record.get("Merchant Category Code (MCC)");
+				if(record.get(DESCRIPTION).equals("AIR TRAVEL")) {
+					String airline = record.get(CAT_CODE);
 					if(airlines.containsKey(airline)) {
 						ArrayList<CSVRecord> records = (ArrayList<CSVRecord>) users.get(userID);
 						records.add(record);
@@ -65,13 +73,13 @@ public class FraudDetection {
 				}
 				
 				//check single-record flags
-				String amountstr = record.get("Amount");
+				String amountstr = record.get(AMOUNT);
+				String vendor=record.get(VENDOR);
 				Float amount = Float.parseFloat(amountstr);
 				if(amount>=50000 || amount%100==0) {
 					printer.printRecord(record);
 				}
-				String vendor=record.get("Vendor");
-				if(vendor.contains("PAWN ") || vendor.contains("RESORT")|| vendor.contains("CASINO")) {
+				else if(vendor.contains("PAWN ") || vendor.contains("RESORT")|| vendor.contains("CASINO")) {
 					printer.printRecord(record);
 				}
 				
@@ -85,6 +93,29 @@ public class FraudDetection {
 					System.out.println(key);
 					for(CSVRecord record: records) {
 						printer.printRecord(record);
+					}
+				}
+			}
+			
+			//go through users, and flag all sets of multiple large transactions in a single day
+			for(Object key: users.keySet()) {
+				ArrayList<CSVRecord> records = (ArrayList<CSVRecord>) users.get(key);
+				HashMap largeTransactions = new HashMap<String, CSVRecord>();
+				for(CSVRecord record: records) {
+					String date = record.get(DATE);
+					Float amount = Float.parseFloat(record.get(AMOUNT));
+					if(amount>=20000 && amount<50000) {
+						if(largeTransactions.containsKey(date)) {
+							if(largeTransactions.get(date)!=null) {
+								printer.printRecord(record);
+								printer.printRecord((CSVRecord)largeTransactions.get(date));
+								largeTransactions.put(date, null);
+							}else {
+								printer.printRecord(record);
+							}
+						}else {
+							largeTransactions.put(date,record);
+						}
 					}
 				}
 			}
