@@ -1,0 +1,9 @@
+File: FraudDetection.java
+Authors: Logan Swanson, Sherri Lin
+Usage: java FraudDetection filename.csv
+
+This program reads in a .csv file from the commandline and creates two new .csv files, one of potentially fraudulent transactions, and one of transactions that might have been errors. In order to flag issues that involve multiple records, this program uses two HashMaps—one that stores airline names mapped to individual records, and one that stores unique user IDs (first initial+last name) mapped to lists of records. To change the names of these two output files or update the header fields that your .csv file will be using, change the values of the constant Strings at the beginning of the class.
+
+In order to run correctly, this program requires the Apache Commons CSV package, which can be downloaded here: https://commons.apache.org/proper/commons-csv/download_csv.cgi. For convenience, the requisite files are also contained in the .zip that was uploaded with this assignment.
+
+The runtime for flagging single-record issues is O(n) where n is the number of records since this program simply loops over the records. The runtime for flagging multiple large transactions by the same user in one day is O(n) as well, since each record is once again looked at once—just this time grouped by user. For flagging the unusual airline transactions, the program loops over each airline in the set, flagging each record for airlines with record lists shorter than 10 records. This means each airline that is under this threshold will have to log at most 10 records. In the worst case, every transactions would be air travel and you would have a lot of infrequently used airlines and this would come out to O(n). In the average case, however the runtime for this component is much better.
